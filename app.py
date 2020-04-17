@@ -133,7 +133,24 @@ def search_venues():
 def show_venue(venue_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
-  return render_template('pages/show_venue.html', venue=Venue.query.get(venue_id))
+  venue = Venue.query.get(venue_id)
+  shows = venue.shows
+  upcoming_shows = []
+  past_shows = []
+  for show in shows:
+    if show.start_time > datetime.utcnow():
+      upcoming_shows.append(show)
+    else:
+      past_shows.append(show)
+    show.start_time = str(show.start_time)
+    show.artist_image_link = show.artist.image_link
+    show.artist_name = show.artist.name
+
+  venue.upcoming_shows = upcoming_shows
+  venue.upcoming_shows_count = len(upcoming_shows)
+  venue.past_shows = past_shows
+  venue.past_shows_count = len(past_shows)
+  return render_template('pages/show_venue.html', venue=venue)
 
 #  Create Venue
 #  ----------------------------------------------------------------
@@ -191,7 +208,24 @@ def search_artists():
 def show_artist(artist_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
-  return render_template('pages/show_artist.html', artist=Artist.query.get(artist_id))
+  artist = Artist.query.get(artist_id)
+  shows = artist.shows
+  upcoming_shows = []
+  past_shows = []
+  for show in shows:
+    if show.start_time > datetime.utcnow():
+      upcoming_shows.append(show)
+    else:
+      past_shows.append(show)
+    show.start_time = str(show.start_time)
+    show.venue_image_link = show.venue.image_link
+    show.venue_name = show.venue.name
+
+  artist.upcoming_shows = upcoming_shows
+  artist.upcoming_shows_count = len(upcoming_shows)
+  artist.past_shows = past_shows
+  artist.past_shows_count = len(past_shows)
+  return render_template('pages/show_artist.html', artist=artist)
 
 #  Update
 #  ----------------------------------------------------------------
