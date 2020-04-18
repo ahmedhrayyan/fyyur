@@ -405,7 +405,7 @@ def create_show_submission():
         flash('Show was successfully listed!')
     except:
         db.session.rollback()
-        flash('An error occurred. Show couldnot be listed')
+        flash('An error occurred. Show could not be listed, make sure the artist and the venue id already exists!')
     finally:
         db.session.close()
 
