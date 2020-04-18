@@ -5,7 +5,7 @@
 import json
 import dateutil.parser
 import babel
-from flask import Flask, render_template, request, Response, flash, redirect, url_for
+from flask import Flask, render_template, request, Response, flash, redirect, url_for, abort, jsonify
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 import logging
@@ -162,24 +162,51 @@ def create_venue_form():
 
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
+  data = request.form
+  name = data.get('name')
+  city = data.get('city')
+  state = data.get('state')
+  address = data.get('address')
+  phone = data.get('phone')
+  genres= ", ".join(data.getlist('genres'))
+  link = data.get('facebook_link')
+  venue = Venue(name=name, city=city, state=state, address=address, phone=phone, genres=genres, facebook_link=link)
+  try:
+    db.session.add(venue)
+    db.session.commit()
+    flash('Venue ' + name + ' was successfully listed!')
+  except:
+    db.session.rollback()
+    flash('An error occurred. Venue ' + name + ' could not be listed.')
+  finally:
+    db.session.close()
+
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
 
   # on successful db insert, flash success
-  flash('Venue ' + request.form['name'] + ' was successfully listed!')
   # TODO: on unsuccessful db insert, flash an error instead.
   # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
   # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
-  return render_template('pages/home.html')
+  return redirect(url_for("index"))
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
   # TODO: Complete this endpoint for taking a venue_id, and using
   # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
+  Venue.query.filter_by(id = venue_id).delete()
+  try:
+    db.session.commit()
+    flash("The venue with id %r has been deleted" % venue_id)
+  except:
+    db.session.rollback()
+    flash("The venue with id %r was not deleted" % venue_id)
+  finally:
+    db.session.close()
 
+  return redirect(url_for('venues'))
   # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
   # clicking that button delete it from the db then redirect the user to the homepage
-  return None
 
 #  Artists
 #  ----------------------------------------------------------------
@@ -258,27 +285,31 @@ def edit_artist_submission(artist_id):
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
   form = VenueForm()
-  venue={
-    "id": 1,
-    "name": "The Musical Hop",
-    "genres": ["Jazz", "Reggae", "Swing", "Classical", "Folk"],
-    "address": "1015 Folsom Street",
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "123-123-1234",
-    "website": "https://www.themusicalhop.com",
-    "facebook_link": "https://www.facebook.com/TheMusicalHop",
-    "seeking_talent": True,
-    "seeking_description": "We are on the lookout for a local artist to play every two weeks. Please call us.",
-    "image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60"
-  }
+  venue = Venue.query.get(venue_id)
   # TODO: populate form with values from venue with ID <venue_id>
   return render_template('forms/edit_venue.html', form=form, venue=venue)
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
-  # TODO: take values from the form submitted, and update existing
-  # venue record with ID <venue_id> using the new attributes
+  data = request.form
+  venue = Venue.query.get(venue_id)
+  prev_name = venue.name
+  venue.name = data.get('name')
+  venue.city = data.get('city')
+  venue.state = data.get('state')
+  venue.address = data.get('address')
+  venue.phone = data.get('phone')
+  venue.genres= ", ".join(data.getlist('genres'))
+  venue.facebook_link = data.get('facebook_link')
+  try:
+    db.session.commit()
+    flash('Venue ' + prev_name + ' was successfully updated!')
+  except:
+    db.session.rollback()
+    flash('An error occurred. Venue ' + prev_name + ' could not be updated.')
+  finally:
+    db.session.close()
+
   return redirect(url_for('show_venue', venue_id=venue_id))
 
 #  Create Artist
@@ -362,7 +393,7 @@ if not app.debug:
 
 # Default port:
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
 
 # Or specify port manually:
 '''

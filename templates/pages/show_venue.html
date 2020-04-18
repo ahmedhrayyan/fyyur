@@ -41,6 +41,10 @@
 			<i class="fas fa-moon"></i> Not currently seeking talent
 		</p>
 		{% endif %}
+		<form action="{{venue.id}}/edit" method="GET">
+			<button type="submit" class="btn" data-id={{venue.id}} style="margin: 12px 4px;">Update Venue</button>
+			<button type="button"class="btn btn-danger" data-id={{venue.id}} onclick="handleVenueDelete(event)" style="margin: 12px 4px;">Delete the Venue</button>
+		</form>
 	</div>
 	<div class="col-sm-6">
 		<img src="{{ venue.image_link }}" alt="Venue Image" />
